@@ -1,20 +1,25 @@
+
 services:
 
   postgres:
     build: postgres
     container_name: postgres_db
     restart: always
+
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secreto123}
-      POSTGRES_DB: ${POSTGRES_DB:-moodle_db}
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secreto123
+      POSTGRES_DB: moodle_db
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-moodle_db}"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d moodle_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+
     networks:
       - db-net
 
@@ -22,23 +27,31 @@ services:
     build: moodle
     container_name: moodle_app
     restart: always
+
     depends_on:
       postgres:
         condition: service_healthy
+
     ports:
       - "8080:8080"
+
     environment:
       MOODLE_DATABASE_TYPE: pgsql
       MOODLE_DATABASE_HOST: postgres
       MOODLE_DATABASE_PORT: 5432
-      MOODLE_DATABASE_NAME: ${POSTGRES_DB:-moodle_db}
-      MOODLE_DATABASE_USER: ${POSTGRES_USER}
-      MOODLE_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-secreto123}
-      MOODLE_USERNAME: ${POSTGRES_USER}
-      MOODLE_PASSWORD: ${MOODLE_PASSWORD:-Admin1234!}
+      MOODLE_DATABASE_NAME: moodle_db
+
+      # CORREGIDO
+      MOODLE_DATABASE_USER: admin
+      MOODLE_DATABASE_PASSWORD: secreto123
+
+      MOODLE_USERNAME: admin
+      MOODLE_PASSWORD: Admin1234!
+
     volumes:
       - moodledata:/var/www/moodledata
       - moodlehtml:/var/www/html
+
     networks:
       - db-net
       - app-net
@@ -47,22 +60,30 @@ services:
     build: backend-arc
     container_name: backend_arc
     restart: always
+
     depends_on:
       postgres:
         condition: service_healthy
+
       backend-ia:
         condition: service_started
+
     ports:
       - "8081:80"
+
     environment:
       DB_HOST: postgres
-      DB_NAME: ${POSTGRES_DB:-moodle_db}
-      DB_USER: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-secreto123}
+      DB_NAME: moodle_db
+      DB_USER: admin
+      DB_PASSWORD: secreto123
+
       IA_SERVICE_URL: http://backend-ia:8000
+
       SHARED_UPLOAD_DIR: /var/plagidec/uploads
+
     volumes:
       - shared_files:/var/plagidec/uploads
+
     networks:
       - db-net
       - app-net
@@ -72,12 +93,16 @@ services:
     build: backend-ia
     container_name: backend_ia
     restart: always
+
     ports:
       - "8000:8000"
+
     environment:
       SHARED_UPLOAD_DIR: /var/plagidec/uploads
+
     volumes:
       - shared_files:/var/plagidec/uploads
+
     networks:
       - ia-net
 
@@ -85,12 +110,16 @@ services:
     build: frontend
     container_name: frontend_app
     restart: always
+
     depends_on:
       - backend-arc
+
     ports:
       - "3000:3000"
+
     environment:
       VITE_API_URL: http://localhost:8081
+
     networks:
       - app-net
 
@@ -104,4 +133,3 @@ networks:
   db-net:
   app-net:
   ia-net:
-
