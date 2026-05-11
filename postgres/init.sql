@@ -1,0 +1,2 @@
+CREATE USER moodle WITH PASSWORD 'secreto123';
+GRANT ALL PRIVILEGES ON DATABASE moodle_db TO moodle;
